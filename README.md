@@ -1,10 +1,10 @@
 # CogniLog 
 > **Intelligent IoT Productivity Assistant powered by Edge AI**
 
-![Status](https://img.shields.io/badge/Status Active_Development brightgreen)
-![Platform](https://img.shields.io/badge/Platform ESP32 blue)
-![Framework](https://img.shields.io/badge/Framework PlatformIO orange)
-![TinyML](https://img.shields.io/badge/AI TinyML red)
+![Status](https://img.shields.io/badge/Status-Active_Development-brightgreen)
+![Platform](https://img.shields.io/badge/Platform-ESP32-blue)
+![Framework](https://img.shields.io/badge/Framework-PlatformIO-orange)
+![TinyML](https://img.shields.io/badge/AI-TinyML-red)
 
 ##  Why CogniLog?
 Most productivity trackers rely on cloud analytics, raising privacy concerns and increasing latency.
