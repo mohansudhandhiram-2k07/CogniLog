@@ -22,11 +22,11 @@ CogniLog is an embedded IoT system designed to track productivity and focus habi
 * **Real time Analytics:** Tracks focus sessions and break intervals.
 * **Energy Efficient:** Optimized for low power consumption using Deep Sleep modes.
 
-##  Tech Stack
+##   Tech Stack
 | Component | Technology |
-|           |            |
-| **Hardware** | ESP32  |
-| **Firmware** | C++ (ESPIDF and Arduino Framework) |
+|-----------|------------|
+| **Hardware** | ESP32 (Xtensa LX6/LX7) |
+| **Firmware** | C++ (ESP-IDF / Arduino Framework) |
 | **IDE/Build** | VS Code + PlatformIO |
 | **Edge AI** | TensorFlow Lite Micro / Edge Impulse |
 | **Connectivity** | WiFi (MQTT), BLE |
