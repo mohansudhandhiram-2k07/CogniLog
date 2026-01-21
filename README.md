@@ -7,7 +7,7 @@
 ![TinyML](https://img.shields.io/badge/AI-TinyML-red)
 
 ## 📖 Overview
-CogniLog is an embedded IoT system designed to track productivity and focus habits without relying on cloud dependency. Unlike traditional trackers, CogniLog processes data **on-device** using TinyML, ensuring privacy and real-time feedback.
+CogniLog is an embedded IoT system designed to track productivity and focus habits without relying on cloud dependency. Unlike traditional trackers, CogniLog processes data **on-device** using TinyML, ensuring privacy and real time feedback.
 
 **Core Goal:** Detect user presence and focus states using sensor fusion and lightweight neural networks running on the ESP32.
 
