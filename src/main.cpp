@@ -20,6 +20,10 @@ Preferences preferences; // Create storage object
 SystemState currentState = STATE_MENU;
 int currentSelection = 0;
 unsigned long lastDebounce = 0;
+unsigned long lastCheckInTime = 0;
+unsigned long nextCheckInInterval = 0;
+bool waitingForCheckIn = false;
+unsigned long checkInPromptTime = 0;
 
 // Session Vars
 unsigned long sessionStartTime = 0;
@@ -92,6 +96,9 @@ void setup() {
     
     // Load Data
     loadStats();
+    // Set first check-in to be between 10 and 20 mins from now (for testing, make it 10-20 seconds)
+    nextCheckInInterval = random(10000, 20000); // 10s - 20s for DEMO only. Use minutes later.
+    lastCheckInTime = millis();
 
     // Boot Chirp
     digitalWrite(PIN_BUZZER, HIGH); delay(50); digitalWrite(PIN_BUZZER, LOW);
@@ -135,33 +142,60 @@ void loop() {
             break;
 
         case STATE_LOGGING:
-            if (bSel) { 
-                // SAVE SESSION ON EXIT
-                unsigned long duration = (millis() - sessionStartTime) / 1000;
-                saveStats(duration);
+            // --- 1. REALITY CHECK (The "Dead Man's Switch") ---
+            // If it's time to check, and we aren't already waiting...
+            if (!waitingForCheckIn && (millis() - lastCheckInTime > nextCheckInInterval)) {
+                waitingForCheckIn = true;
+                checkInPromptTime = millis();
                 
-                currentState = STATE_MENU;
-                updateDisplay();
-                lastDebounce = millis();
+                Serial.println("[CHECK]: Are you still there? Press SELECT!");
+                // Trigger Alarm chirp
+                digitalWrite(PIN_BUZZER, HIGH); delay(100); digitalWrite(PIN_BUZZER, LOW);
             }
-            
-            static unsigned long lastAiCheck = 0;
-            if (millis() - lastAiCheck > 1000) {
-                lastAiCheck = millis();
-                bool focused = getAttentionScore();
-                isDistracted = !focused;
 
-                if (!focused) {
-                    distractionCounter++;
-                    digitalWrite(PIN_LED, HIGH); digitalWrite(PIN_BUZZER, HIGH);
-                    delay(50);
-                    digitalWrite(PIN_LED, LOW); digitalWrite(PIN_BUZZER, LOW);
-                } else {
-                    if (distractionCounter > 0) distractionCounter--; 
+            // --- 2. HANDLING THE CHECK-IN ---
+            if (waitingForCheckIn) {
+                // Blink LED aggressively
+                if ((millis() / 200) % 2 == 0) digitalWrite(PIN_LED, HIGH);
+                else digitalWrite(PIN_LED, LOW);
+
+                // IF BUTTON PRESSED: Pass!
+                if (bSel) {
+                    waitingForCheckIn = false;
+                    digitalWrite(PIN_LED, LOW);
+                    Serial.println("[PASS]: Focus Verified.");
+                    
+                    // Reset Check-in Timer
+                    lastCheckInTime = millis();
+                    nextCheckInInterval = random(10000, 20000); // 10-20 seconds (TEST MODE)
+                    lastDebounce = millis(); // Prevent double-triggering "Stop Session"
                 }
 
-                if (distractionCounter >= DISTRACTION_LIMIT) currentState = STATE_ALARM;
-                updateDisplay(); 
+                // IF TIMEOUT: Fail!
+                if (millis() - checkInPromptTime > 10000) { // 10 seconds to react
+                    Serial.println("[FAIL]: User unresponsive. ALARM!");
+                    currentState = STATE_ALARM;
+                    waitingForCheckIn = false;
+                }
+            }
+            
+            // --- 3. NORMAL LOGGING (When not checking in) ---
+            else {
+                // Check if user wants to STOP manually
+                if (bSel) { 
+                    unsigned long duration = (millis() - sessionStartTime) / 1000;
+                    saveStats(duration);
+                    currentState = STATE_MENU;
+                    updateDisplay();
+                    lastDebounce = millis();
+                }
+
+                // Update the Display Timer every 1 second
+                static unsigned long lastUpdate = 0;
+                if (millis() - lastUpdate > 1000) {
+                    lastUpdate = millis();
+                    updateDisplay(); // This makes the "Time: 12s" tick up!
+                }
             }
             break;
 
