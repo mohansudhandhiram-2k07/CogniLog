@@ -4,7 +4,11 @@
 #include "StorageManager.h"
 #include "NetworkManager.h"
 #include "PowerManager.h"
+#include "MicManager.h"
 
+// --- DEFINE CREDENTIALS EXACTLY ONCE ---
+const char *ssid = "vivo Y56 5G";
+const char *password = "12345678";
 // --- GLOBALS ---
 SystemState currentState = STATE_MENU;
 int currentSelection = 0;
@@ -25,9 +29,9 @@ extern Adafruit_SSD1306 display;
 
 // Function Prototype
 void triggerChirp(unsigned long duration);
-
+MicManager mic;
 void setup() {
-    Serial.begin(115200);
+    Serial.begin(921600);
     randomSeed(analogRead(34) + micros());
 
     pinMode(PIN_BTN_UP, INPUT_PULLUP);
@@ -39,7 +43,8 @@ void setup() {
     initDisplay();
     showBootAnimation();
     initStorage();
-    initWiFi();
+    mic.initMic();
+    // initWiFi();
 
     triggerChirp(50); // Non-blocking boot chirp
     
@@ -48,24 +53,29 @@ void setup() {
 }
 
 void loop() {
-    
-    // ASYNC BUZZER HANDLER
-    if (buzzerEndTime != 0 && millis() > buzzerEndTime) {
-        digitalWrite(PIN_BUZZER, LOW);
-        buzzerEndTime = 0;
-    }
+
+    int new_samples = mic.readMicData();
+    if (new_samples > 0) {
+        Serial.write((uint8_t*)mic.inference_buffer, new_samples * sizeof(int16_t));
+    }else {
+    Serial.println("DEBUG: No samples read!"); // Uncomment this to check
+}
+    // THE FIX: Blast the entire buffer array to the PC as raw binary bytes
 
     bool bUp = !digitalRead(PIN_BTN_UP);
     bool bDown = !digitalRead(PIN_BTN_DOWN);
     bool bSel = !digitalRead(PIN_BTN_SELECT);
     bool shouldRefresh = false;
 
-    if (checkUDP(pcFocus)) {
-        if (!pcFocus && currentState == STATE_LOGGING && !waitingForCheckIn) {
-            waitingForCheckIn = true;
-            checkInPromptTime = millis();
-            triggerChirp(150);
-            shouldRefresh = true;
+    // THE FIX: Guard the UDP check so it doesn't run while WiFi is disconnected
+    if (WiFi.status() == WL_CONNECTED) {
+        if (checkUDP(pcFocus)) {
+            if (!pcFocus && currentState == STATE_LOGGING && !waitingForCheckIn) {
+                waitingForCheckIn = true;
+                checkInPromptTime = millis();
+                triggerChirp(150);
+                shouldRefresh = true;
+            }
         }
     }
 

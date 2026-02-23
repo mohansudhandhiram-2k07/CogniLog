@@ -16,7 +16,7 @@ void showBootAnimation() {
         display.drawRect(0, 30, i, 8, SSD1306_WHITE);
         display.setCursor(30, 15);
         display.println("COGNILOG OS");
-        display.display();
+        display.display(); 
     }
 }
 
